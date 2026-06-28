@@ -15,28 +15,27 @@ def main():
         
     sc = spark.sparkContext
 
-    # 1. Load the text file as an RDD
-    # Replace with full path if necessary: "/Users/deborahmaignan/Desktop/CSC4760_Assign/people.csv"
+    #Load the text file as an RDD
     raw_rdd = sc.textFile("people.csv")
 
-    # 2. Filter out the header row
+    #Filter out the header row
     header = raw_rdd.first()
     data_rdd = raw_rdd.filter(lambda line: line != header)
 
-    # 3. Parse the lines and map to key-value pairs: (gender, (age, 1))
-    # We use a try/except or split to pull gender (index 2) and age (index 1)
+    #Parse the lines and map to key-value pairs: (gender, (age, 1))
+    #We use a try/except or split to pull gender (index 2) and age (index 1)
     parsed_rdd = data_rdd.map(lambda line: line.split(",")) \
                          .map(lambda cols: (cols[2], (int(cols[1]), 1)))
 
-    # 4. Reduce by key to sum the ages and sum the counts
+    #Reduce by key to sum the ages and sum the counts
     # (gender, (total_age, total_count))
     totals_rdd = parsed_rdd.reduceByKey(lambda a, b: (a[0] + b[0], a[1] + b[1]))
 
-    # 5. Map to calculate the average: total_age / total_count
+    # Map to calculate the average: total_age / total_count
     # (gender, average_age)
     averages_rdd = totals_rdd.mapValues(lambda val: round(val[0] / val[1], 2))
 
-    # 6. Collect and print the final results
+    # Collect and print the final results
     results = averages_rdd.collect()
     
     print("\n--- OUTPUT DATA ---")
