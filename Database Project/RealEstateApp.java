@@ -8,6 +8,18 @@ public class RealEstateApp {
 
     public static void main(String[] args) {
 
+        // Explicitly register the SQLite driver. Not strictly required on
+        // modern JDBC (it auto-registers from the jar's META-INF/services
+        // file), but this makes the failure mode obvious and immediate if
+        // sqlite-jdbc.jar isn't actually on the classpath.
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            System.out.println("SQLite JDBC driver not found on the classpath.");
+            System.out.println("Make sure sqlite-jdbc.jar is present and included with -cp.");
+            return;
+        }
+
         initializeDatabase();
 
         while (true) {
@@ -25,7 +37,30 @@ public class RealEstateApp {
             System.out.println("7. Update Agent");
             System.out.println("8. Delete Agent");
 
-            System.out.println("\n9. Exit");
+            System.out.println("\nBUYER");
+            System.out.println("9. List Buyers");
+            System.out.println("10. Add Buyer");
+            System.out.println("11. Update Buyer");
+            System.out.println("12. Delete Buyer");
+
+            System.out.println("\nSELLER");
+            System.out.println("13. List Sellers");
+            System.out.println("14. Add Seller");
+            System.out.println("15. Update Seller");
+            System.out.println("16. Delete Seller");
+
+            System.out.println("\nSALE");
+            System.out.println("17. Record Sale");
+            System.out.println("18. List Sales");
+
+            System.out.println("\nSEARCH / REPORTS");
+            System.out.println("20. Search Properties by City");
+            System.out.println("21. Search Properties by Max Price");
+            System.out.println("22. Search Properties by School District");
+            System.out.println("23. Average Sale Price");
+            System.out.println("24. Most Expensive Property");
+
+            System.out.println("\n19. Exit");
 
             System.out.print("Select an option: ");
             String choice = scanner.nextLine();
@@ -65,6 +100,66 @@ public class RealEstateApp {
                     break;
 
                 case "9":
+                    listBuyers();
+                    break;
+
+                case "10":
+                    insertBuyer();
+                    break;
+
+                case "11":
+                    updateBuyer();
+                    break;
+
+                case "12":
+                    deleteBuyer();
+                    break;
+
+                case "13":
+                    listSellers();
+                    break;
+
+                case "14":
+                    insertSeller();
+                    break;
+
+                case "15":
+                    updateSeller();
+                    break;
+
+                case "16":
+                    deleteSeller();
+                    break;
+
+                case "17":
+                    recordSale();
+                    break;
+
+                case "18":
+                    listSales();
+                    break;
+
+                case "20":
+                    searchCity();
+                    break;
+
+                case "21":
+                    searchPrice();
+                    break;
+
+                case "22":
+                    searchSchoolDistrict();
+                    break;
+
+                case "23":
+                    averageSales();
+                    break;
+
+                case "24":
+                    mostExpensiveProperty();
+                    break;
+
+                case "19":
                     System.out.println("Goodbye!");
                     return;
 
@@ -73,6 +168,8 @@ public class RealEstateApp {
             }
         }
     }
+
+
 
     // Create Database
     private static void initializeDatabase() {
@@ -91,8 +188,9 @@ public class RealEstateApp {
                             "price REAL," +
                             "pool TEXT," +
                             "seller_id INTEGER," +
-                            "listing_agent INTEGER," +
+                            "listing_agent INTEGER" +
                             ");");
+
 
             stmt.execute(
                     "CREATE TABLE IF NOT EXISTS agent(" +
@@ -102,6 +200,38 @@ public class RealEstateApp {
                             "phone TEXT," +
                             "email TEXT" +
                             ");");
+
+
+            stmt.execute(
+                    "CREATE TABLE IF NOT EXISTS buyer(" +
+                            "buyer_id INTEGER PRIMARY KEY," +
+                            "first_name TEXT," +
+                            "last_name TEXT," +
+                            "phone TEXT" +
+                            ");");
+
+
+            stmt.execute(
+                    "CREATE TABLE IF NOT EXISTS seller(" +
+                            "seller_id INTEGER PRIMARY KEY," +
+                            "first_name TEXT," +
+                            "last_name TEXT," +
+                            "phone TEXT" +
+                            ");");
+
+
+            stmt.execute(
+                    "CREATE TABLE IF NOT EXISTS sale(" +
+                            "sale_id INTEGER PRIMARY KEY," +
+                            "property_id INTEGER," +
+                            "buyer_id INTEGER," +
+                            "seller_id INTEGER," +
+                            "selling_agent INTEGER," +
+                            "buyers_agent INTEGER," +
+                            "sale_price REAL," +
+                            "sale_date TEXT" +
+                            ");");
+
 
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -239,11 +369,11 @@ public class RealEstateApp {
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(sql)) {
 
-            System.out.printf("%-5s %-20s %-15s %-12s\n", "ID", "Name", "Phone", "Email");
+            System.out.printf("%-5s %-20s %-15s %-30s\n", "ID", "Name", "Phone", "Email");
 
             while (rs.next()) {
 
-                System.out.printf("%-5d %-20s %-15s %-12s\n",
+                System.out.printf("%-5d %-20s %-15s %-30s\n",
 
                         rs.getInt("agent_id"),
                         rs.getString("first_name") + " " + rs.getString("last_name"),
@@ -263,8 +393,11 @@ public class RealEstateApp {
         System.out.print("Agent ID: ");
         int id = Integer.parseInt(scanner.nextLine());
 
-        System.out.print("Name: ");
-        String name = scanner.nextLine();
+        System.out.print("First Name: ");
+        String firstName = scanner.nextLine();
+
+        System.out.print("Last Name: ");
+        String lastName = scanner.nextLine();
 
         System.out.print("Phone: ");
         String phone = scanner.nextLine();
@@ -272,10 +405,10 @@ public class RealEstateApp {
         System.out.print("Email: ");
         String email = scanner.nextLine();
 
-        String sql = "INSERT INTO agent(agent_id,name,phone,email)"
-                + " VALUES(?,?,?,?)";
+        String sql = "INSERT INTO agent(agent_id, first_name, last_name, phone, email) "
+                + " VALUES(?,?,?,?,?)";
 
-        executeUpdate(sql, id, name, phone, email);
+        executeUpdate(sql, id, firstName, lastName, phone, email);
     }
 
     // Update Agent
@@ -315,16 +448,16 @@ public class RealEstateApp {
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(sql)) {
 
-            System.out.printf("%-5s %-20s %-15s %-12s\n", "ID", "Name", "Phone", "Email");
+            System.out.printf("%-5s %-15s %-15s %-15s\n", "ID", "First Name", "Last Name", "Phone");
 
             while (rs.next()) {
 
-                System.out.printf("%-5d %-20s %-15s %-12s\n",
+                System.out.printf("%-5d %-15s %-15s %-15s\n",
 
                         rs.getInt("buyer_id"),
-                        rs.getString("name"),
-                        rs.getString("phone"),
-                        rs.getString("email"));
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("phone"));
             }
 
         } catch (SQLException e) {
@@ -339,19 +472,19 @@ public class RealEstateApp {
         System.out.print("Buyer ID: ");
         int id = Integer.parseInt(scanner.nextLine());
 
-        System.out.print("Name: ");
-        String name = scanner.nextLine();
+        System.out.print("First Name: ");
+        String firstName = scanner.nextLine();
+
+        System.out.print("Last Name: ");
+        String lastName = scanner.nextLine();
 
         System.out.print("Phone: ");
         String phone = scanner.nextLine();
 
-        System.out.print("Email: ");
-        String email = scanner.nextLine();
-
-        String sql = "INSERT INTO buyer(buyer_id,name,phone,email)"
+        String sql = "INSERT INTO buyer(buyer_id,first_name,last_name,phone)"
                 + " VALUES(?,?,?,?)";
 
-        executeUpdate(sql, id, name, phone, email);
+        executeUpdate(sql, id, firstName, lastName, phone);
     }
 
     // Update Buyer
@@ -391,16 +524,16 @@ public class RealEstateApp {
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(sql)) {
 
-            System.out.printf("%-5s %-20s %-15s %-12s\n", "ID", "Name", "Phone", "Email");
+            System.out.printf("%-5s %-15s %-15s %-15s\n", "ID", "First Name", "Last Name", "Phone");
 
             while (rs.next()) {
 
-                System.out.printf("%-5d %-20s %-15s %-12s\n",
+                System.out.printf("%-5d %-20s %-20s %-15s\n",
 
                         rs.getInt("seller_id"),
-                        rs.getString("name"),
-                        rs.getString("phone"),
-                        rs.getString("email"));
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("phone"));
             }
 
         } catch (SQLException e) {
@@ -415,19 +548,19 @@ public class RealEstateApp {
         System.out.print("Seller ID: ");
         int id = Integer.parseInt(scanner.nextLine());
 
-        System.out.print("Name: ");
-        String name = scanner.nextLine();
+        System.out.print("First Name: ");
+        String firstName = scanner.nextLine();
+
+        System.out.print("Last Name: ");
+        String lastName = scanner.nextLine();
 
         System.out.print("Phone: ");
         String phone = scanner.nextLine();
 
-        System.out.print("Email: ");
-        String email = scanner.nextLine();
-
-        String sql = "INSERT INTO seller(seller_id,name,phone,email)"
+        String sql = "INSERT INTO seller(seller_id,first_name,last_name,phone)"
                 + " VALUES(?,?,?,?)";
 
-        executeUpdate(sql, id, name, phone, email);
+        executeUpdate(sql, id, firstName, lastName, phone);
     }
 
     // Update Seller
@@ -470,13 +603,34 @@ public class RealEstateApp {
         System.out.print("Buyer ID: ");
         int buyerId = Integer.parseInt(scanner.nextLine());
 
+        System.out.print("Seller ID: ");
+        int sellerId = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("Selling Agent ID: ");
+        int sellingAgent = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("Buyer's Agent ID: ");
+        int buyersAgent = Integer.parseInt(scanner.nextLine());
+
         System.out.print("Sale Price: ");
         double salePrice = Double.parseDouble(scanner.nextLine());
 
-        String sql = "INSERT INTO sale(sale_id,property_id,buyer_id,sale_price)"
-                + " VALUES(?,?,?,?)";
+        System.out.print("Sale Date: ");
+        String saleDate = scanner.nextLine();
 
-        executeUpdate(sql, saleId, propertyId, buyerId, salePrice);
+        String sql = "INSERT INTO sale(" +
+                "sale_id, property_id, buyer_id, seller_id, selling_agent, buyers_agent, sale_price, sale_date)" +
+                " VALUES(?,?,?,?,?,?,?,?)";
+
+        executeUpdate(sql,
+                saleId,
+                propertyId,
+                buyerId,
+                sellerId,
+                sellingAgent,
+                buyersAgent,
+                salePrice,
+                saleDate);
     }
 
     // List Sales
