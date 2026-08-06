@@ -8,10 +8,7 @@ public class RealEstateApp {
 
     public static void main(String[] args) {
 
-        // Explicitly register the SQLite driver. Not strictly required on
-        // modern JDBC (it auto-registers from the jar's META-INF/services
-        // file), but this makes the failure mode obvious and immediate if
-        // sqlite-jdbc.jar isn't actually on the classpath.
+      
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
